@@ -1,0 +1,2 @@
+# powershell-ftp-deploy
+WindowsのPowerShellを使ったFTPアップロードプログラム
