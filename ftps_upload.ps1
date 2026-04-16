@@ -60,9 +60,62 @@ $ftpUrl = "ftp://$FtpServer$RemoteDir$fileName"
 # 認証情報の読み込み
 $credential = Import-Clixml -Path $credPath
 
+function Ensure-RemoteDirectoryExists {
+    param (
+        [string]$Server,
+        [string]$Path,
+        [System.Management.Automation.PSCredential]$Credential,
+        [bool]$EnableSsl
+    )
+
+    # 入力パスを正規化し、ルート指定なら作成不要
+    $normalizedPath = $Path.Trim()
+    if ([string]::IsNullOrWhiteSpace($normalizedPath) -or $normalizedPath -eq "/") {
+        return
+    }
+
+    # /a/b/c のような階層を1段ずつ作成するために分解
+    $segments = $normalizedPath.Trim("/").Split("/", [System.StringSplitOptions]::RemoveEmptyEntries)
+    $currentPath = ""
+
+    foreach ($segment in $segments) {
+        $currentPath += "/$segment"
+        $dirUrl = "ftp://$Server$currentPath"
+
+        # FTPS の MKD コマンドでディレクトリ作成を試行
+        $mkdirRequest = [System.Net.WebRequest]::Create($dirUrl) -as [System.Net.FtpWebRequest]
+        $mkdirRequest.Method = [System.Net.WebRequestMethods+Ftp]::MakeDirectory
+        $mkdirRequest.Credentials = $Credential
+        $mkdirRequest.EnableSsl = $EnableSsl
+        $mkdirRequest.KeepAlive = $false
+
+        try {
+            $mkdirResponse = $mkdirRequest.GetResponse() -as [System.Net.FtpWebResponse]
+            $mkdirResponse.Close()
+        }
+        catch [System.Net.WebException] {
+            $ftpResponse = $_.Exception.Response -as [System.Net.FtpWebResponse]
+            if ($null -ne $ftpResponse) {
+                $statusCode = $ftpResponse.StatusCode
+                $ftpResponse.Close()
+
+                # 既存ディレクトリはエラー扱いにせず次の階層へ進む
+                if ($statusCode -eq [System.Net.FtpStatusCode]::ActionNotTakenFileUnavailable) {
+                    continue
+                }
+            }
+
+            throw
+        }
+    }
+}
+
 try {
     Write-Host "アップロード先: $ftpUrl"
     Write-Host "FTPS (FTP over SSL) でのアップロードを開始します..."
+
+    # 指定ディレクトリが未存在なら作成する
+    Ensure-RemoteDirectoryExists -Server $FtpServer -Path $RemoteDir -Credential $credential -EnableSsl $true
     
     # WebClientの代わりに FtpWebRequest を作成
     $request = [System.Net.WebRequest]::Create($ftpUrl) -as [System.Net.FtpWebRequest]
