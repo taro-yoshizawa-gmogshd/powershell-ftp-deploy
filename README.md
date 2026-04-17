@@ -15,4 +15,6 @@ FTPのホスト名 or IPを`ftp_settings.json`に記述し、`ftp_upload.ps1`と
 ```
 
 ## コマンド例
-`powershell -ExecutionPolicy Bypass -File ".\ftp_upload.ps1" -RemoteDir "/" -LocalFile ".\sample.jpg"`
+`powershell -ExecutionPolicy Bypass -File ".\ftp_upload.ps1" -RemoteDir "/" -LocalFile ".\index.html"`
+
+`powershell -ExecutionPolicy Bypass -File ".\ftp_upload.ps1" -RemoteDir "/assets/img/" -LocalFile ".\assets\img\sample.jpg"`
