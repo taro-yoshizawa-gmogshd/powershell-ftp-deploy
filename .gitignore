@@ -1,2 +1,8 @@
 ftp_cred.xml
 ftp_settings.json
+
+ftp/ftp_cred.xml
+ftp/ftp_settings.json
+
+ftps/ftps_cred.xml
+ftps/ftps_settings.json
