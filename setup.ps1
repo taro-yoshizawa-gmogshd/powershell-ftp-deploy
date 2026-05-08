@@ -74,8 +74,9 @@ Write-Host ""
 # ==========================================
 Write-Host "[ステップ 3/3] FTPのユーザー名とパスワードを入力してください" -ForegroundColor Yellow
 Write-Host "  ※ パスワードは暗号化して保存されます（このPCでのみ復号可能）"
-Write-Host "資格情報ダイアログが表示されます。表示されない場合は、他のウィンドウの背後に隠れている可能性があります。" -ForegroundColor DarkYellow
-Write-Host ""
+Write-Host "資格情報ダイアログが表示されます。表示されない場合は以下を確認してください:" -ForegroundColor DarkYellow
+Write-Host "  → 他のウィンドウに隠れている場合があります。Alt + Tab で切り替えて確認してください" -ForegroundColor DarkYellow
+Write-Host "  → 見つからない、または選んでも表示できない時は、Windowsを再ログインすると直る場合があります" -ForegroundColor DarkYellow
 
 $credential = Get-Credential -Message "FTPの認証情報を入力してください"
 
