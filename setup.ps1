@@ -38,8 +38,8 @@ Write-Host ""
 # ==========================================
 # ステップ 2: FTPサーバーの設定
 # ==========================================
-Write-Host "[ステップ 2/3] FTPサーバーのホスト名またはIPアドレスを入力してください" -ForegroundColor Yellow
-Write-Host "  例: ftp.example.com, 192.168.1.100"
+Write-Host "[ステップ 2/3] FTPサーバーのホスト名を入力してください" -ForegroundColor Yellow
+Write-Host "  例: ftp2.blue.shared-server.net"
 Write-Host ""
 
 do {
