@@ -38,7 +38,7 @@ Write-Host ""
 # ==========================================
 # ステップ 2: FTPサーバーの設定
 # ==========================================
-Write-Host "[ステップ 2/3] FTPサーバーのホスト名を入力してください" -ForegroundColor Yellow
+Write-Host "[ステップ 2/3] FTPサーバーのホスト名かIPアドレスを入力してください" -ForegroundColor Yellow
 Write-Host "  例: ftp2.blue.shared-server.net"
 Write-Host ""
 
@@ -74,6 +74,7 @@ Write-Host ""
 # ==========================================
 Write-Host "[ステップ 3/3] FTPのユーザー名とパスワードを入力してください" -ForegroundColor Yellow
 Write-Host "  ※ パスワードは暗号化して保存されます（このPCでのみ復号可能）"
+Write-Host "資格情報ダイアログが表示されます。表示されない場合は、他のウィンドウの背後に隠れている可能性があります。" -ForegroundColor DarkYellow
 Write-Host ""
 
 $credential = Get-Credential -Message "FTPの認証情報を入力してください"
