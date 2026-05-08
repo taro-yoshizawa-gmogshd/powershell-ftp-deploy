@@ -74,18 +74,11 @@ Write-Host ""
 # ==========================================
 Write-Host "[ステップ 3/3] FTPのユーザー名とパスワードを入力してください" -ForegroundColor Yellow
 Write-Host "  ※ パスワードは暗号化して保存されます（このPCでのみ復号可能）"
-Write-Host "資格情報ダイアログが表示されます。表示されない場合は以下を確認してください:" -ForegroundColor DarkYellow
-Write-Host "  → 他のウィンドウに隠れている場合があります。Alt + Tab で切り替えて確認してください" -ForegroundColor DarkYellow
-Write-Host "  → 見つからない、または選んでも表示できない時は、Windowsを再ログインすると直る場合があります" -ForegroundColor DarkYellow
+Write-Host ""
 
-$credential = Get-Credential -Message "FTPの認証情報を入力してください"
-
-if ($null -eq $credential) {
-    Write-Host "エラー: 認証情報の入力がキャンセルされました。" -ForegroundColor Red
-    Write-Host "認証情報なしで終了します。後から以下のコマンドで作成できます:" -ForegroundColor Yellow
-    Write-Host '  Get-Credential | Export-Clixml -Path ".\ftp\ftp_cred.xml"' -ForegroundColor White
-    exit
-}
+$user = Read-Host "ユーザー名を入力してください(例: webmaster@example.com)"
+$securePass = Read-Host "パスワードを入力してください" -AsSecureString
+$credential = New-Object System.Management.Automation.PSCredential ($user, $securePass)
 
 foreach ($dir in $targetDirs) {
     $credPath = Join-Path $dir "ftp_cred.xml"
