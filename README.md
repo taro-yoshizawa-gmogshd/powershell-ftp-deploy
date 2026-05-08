@@ -49,3 +49,15 @@ Get-Credential | Export-Clixml -Path ".\ftp_cred.xml"
 
 - [FTP の使い方](ftp/FTP.md)
 - [FTPS の使い方](ftps/FTPS.md)
+
+---
+
+# AI アシスタント連携（SKILL.md）
+
+GitHub Copilot および Claude 向けのスキル定義ファイルを用意しています。
+対応するエディタで本リポジトリを開くと、AIアシスタントが FTPS 操作（アップロード・ダウンロード・一覧表示・ファイル内容表示）を自動で実行できるようになります。
+
+| AI アシスタント | スキルファイル |
+|---|---|
+| GitHub Copilot | [.github/skills/ftps-deploy/SKILL.md](.github/skills/ftps-deploy/SKILL.md) |
+| Claude | [.claude/skills/ftps-deploy/SKILL.md](.claude/skills/ftps-deploy/SKILL.md) |
