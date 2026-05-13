@@ -80,3 +80,22 @@ powershell -ExecutionPolicy Bypass -File ".\ftp_cat.ps1" -RemoteFile "/logs/app.
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".\ftp_download.ps1" -RemoteFile "/data/report.csv" -LocalDir "C:\Downloads\"
 ```
+
+---
+
+# ファイル削除
+
+リモートサーバー上のファイルを削除します。
+
+**パラメータ**
+
+| パラメータ | 必須 | 説明 |
+|---|---|---|
+| `-RemoteFile` | ✔ | 削除するリモートファイルのパス（例: `/logs/old.log`） |
+| `-FtpServer` | | FTPサーバーのホスト名またはIP（省略時は `ftp_settings.json` から読み込み） |
+
+**コマンド例**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\ftp_delete.ps1" -RemoteFile "/logs/old.log"
+```
