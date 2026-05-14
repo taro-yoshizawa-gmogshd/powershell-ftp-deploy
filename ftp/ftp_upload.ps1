@@ -59,7 +59,7 @@ if (-Not $RemoteDir.EndsWith("/")) {
 # 認証情報の読み込み
 $credential = Import-Clixml -Path $credPath
 
-function Ensure-RemoteDirectoryExists {
+function Initialize-RemoteDirectory {
     param (
         [string]$Server,
         [string]$Path,
@@ -111,7 +111,7 @@ function Ensure-RemoteDirectoryExists {
 
 # 指定ディレクトリが未存在なら作成する（最初の1回だけ実行）
 try {
-    Ensure-RemoteDirectoryExists -Server $FtpServer -Path $RemoteDir -Credential $credential -EnableSsl $false
+    Initialize-RemoteDirectory -Server $FtpServer -Path $RemoteDir -Credential $credential -EnableSsl $false
 }
 catch {
     Write-Host "エラー: リモートディレクトリの作成に失敗しました: $_" -ForegroundColor Red
