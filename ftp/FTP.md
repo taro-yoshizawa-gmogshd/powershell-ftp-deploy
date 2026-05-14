@@ -14,13 +14,21 @@ FTP プロトコルを使ったスクリプトの使い方です。
 | パラメータ | 必須 | 説明 |
 |---|---|---|
 | `-RemoteDir` | ✔ | アップロード先のリモートディレクトリ（例: `/target/`） |
-| `-LocalFile` | ✔ | アップロードするローカルファイルのパス（例: `.\sample.jpg`） |
+| `-LocalFile` | ✔ | アップロードするローカルファイルのパス（複数指定可） |
 | `-FtpServer` | | FTPサーバーのホスト名またはIP（省略時は `ftp_settings.json` から読み込み） |
 
-**コマンド例**
+**コマンド例（1ファイル）**
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".\ftp_upload.ps1" -RemoteDir "/images/" -LocalFile ".\sample.jpg"
+```
+
+**コマンド例（複数ファイル）**
+
+`powershell -File` 経由の場合は、カンマ区切りで指定してください。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\ftp_upload.ps1" -RemoteDir "/images/" -LocalFile ".\sample1.jpg,.\sample2.jpg,.\sample3.jpg"
 ```
 
 ---
