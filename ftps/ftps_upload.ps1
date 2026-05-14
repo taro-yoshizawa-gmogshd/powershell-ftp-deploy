@@ -7,8 +7,8 @@ param (
     [Parameter(Mandatory=$true, HelpMessage="アップロード先のディレクトリを指定してください")]
     [string]$RemoteDir,      # 例: /target_directory/
 
-    [Parameter(Mandatory=$true, HelpMessage="アップロードするローカルファイルを指定してください")]
-    [string]$LocalFile       # 例: C:\path\to\your_local_file.txt
+    [Parameter(Mandatory=$true, HelpMessage="アップロードするローカルファイルを指定してください（複数指定可）")]
+    [string[]]$LocalFile     # 例: C:\path\to\file1.txt, C:\path\to\file2.txt
 )
 
 # ==========================================
@@ -28,31 +28,30 @@ if (Test-Path $configPath) {
     if ([string]::IsNullOrWhiteSpace($FtpServer)) { $FtpServer = $config.FtpServer }
 }
 
+# カンマ区切りで渡された場合に分割する（スペースを含むパスを引用符でまとめて渡した場合の対応）
+$LocalFile = $LocalFile | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+
 # パラメータチェック
-if ([string]::IsNullOrWhiteSpace($FtpServer) -or [string]::IsNullOrWhiteSpace($LocalFile)) {
+if ([string]::IsNullOrWhiteSpace($FtpServer) -or $LocalFile.Count -eq 0) {
     Write-Host "エラー: ホスト名またはファイルが指定されていません。" -ForegroundColor Red
     exit
 }
 
 # アップロード対象のファイルが実在するかチェック
-if (-Not (Test-Path $LocalFile)) {
-    Write-Host "エラー: 指定されたローカルファイルが見つかりません ($LocalFile)" -ForegroundColor Red
-    exit
+foreach ($file in $LocalFile) {
+    if (-Not (Test-Path $file)) {
+        Write-Host "エラー: 指定されたローカルファイルが見つかりません ($file)" -ForegroundColor Red
+        exit
+    }
 }
 
 # ==========================================
-# URLの組み立て
+# URLの組み立て（共通部分）
 # ==========================================
-# ローカルファイルからファイル名だけを抽出 (例: data.txt)
-$fileName = Split-Path $LocalFile -Leaf
-
 # ディレクトリ指定の末尾に「/」がなければ補完する（エラー防止）
 if (-Not $RemoteDir.EndsWith("/")) {
     $RemoteDir += "/"
 }
-
-# アップロード先の完全なURLを作成 (例: ftp://ftp.example.com/target_directory/data.txt)
-$ftpUrl = "ftp://$FtpServer$RemoteDir$fileName"
 
 # ==========================================
 # 実行処理 (FTPS対応版)
@@ -60,7 +59,7 @@ $ftpUrl = "ftp://$FtpServer$RemoteDir$fileName"
 # 認証情報の読み込み
 $credential = Import-Clixml -Path $credPath
 
-function Ensure-RemoteDirectoryExists {
+function Initialize-RemoteDirectory {
     param (
         [string]$Server,
         [string]$Path,
@@ -110,35 +109,56 @@ function Ensure-RemoteDirectoryExists {
     }
 }
 
+# 指定ディレクトリが未存在なら作成する（最初の1回だけ実行）
 try {
-    Write-Host "アップロード先: $ftpUrl"
-    Write-Host "FTPS (FTP over SSL) でのアップロードを開始します..."
-
-    # 指定ディレクトリが未存在なら作成する
-    Ensure-RemoteDirectoryExists -Server $FtpServer -Path $RemoteDir -Credential $credential -EnableSsl $true
-    
-    # WebClientの代わりに FtpWebRequest を作成
-    $request = [System.Net.WebRequest]::Create($ftpUrl) -as [System.Net.FtpWebRequest]
-    $request.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
-    $request.Credentials = $credential
-    
-    # ----------------------------------------------------
-    # ここで FTPS (SSL/TLS) を有効化します
-    $request.EnableSsl = $true
-    # ----------------------------------------------------
-
-    # ローカルファイルを読み込んでサーバーへ転送
-    $fileStream = [System.IO.File]::OpenRead($LocalFile)
-    $requestStream = $request.GetRequestStream()
-    
-    $fileStream.CopyTo($requestStream)
-    
-    # ストリームを閉じる
-    $fileStream.Close()
-    $requestStream.Close()
-    
-    Write-Host "アップロードが完了しました！" -ForegroundColor Green
+    Initialize-RemoteDirectory -Server $FtpServer -Path $RemoteDir -Credential $credential -EnableSsl $true
 }
 catch {
-    Write-Host "エラーが発生しました: $_" -ForegroundColor Red
+    Write-Host "エラー: リモートディレクトリの作成に失敗しました: $_" -ForegroundColor Red
+    exit
 }
+
+$successCount = 0
+$failCount = 0
+
+foreach ($file in $LocalFile) {
+    # ローカルファイルからファイル名だけを抽出
+    $fileName = Split-Path $file -Leaf
+
+    # アップロード先の完全なURLを作成
+    $ftpUrl = "ftp://$FtpServer$RemoteDir$fileName"
+
+    try {
+        Write-Host "アップロード中: $file -> $ftpUrl"
+
+        # FtpWebRequest を作成
+        $request = [System.Net.WebRequest]::Create($ftpUrl) -as [System.Net.FtpWebRequest]
+        $request.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
+        $request.Credentials = $credential
+
+        # ----------------------------------------------------
+        # ここで FTPS (SSL/TLS) を有効化します
+        $request.EnableSsl = $true
+        # ----------------------------------------------------
+
+        # ローカルファイルを読み込んでサーバーへ転送
+        $fileStream = [System.IO.File]::OpenRead($file)
+        $requestStream = $request.GetRequestStream()
+
+        $fileStream.CopyTo($requestStream)
+
+        # ストリームを閉じる
+        $fileStream.Close()
+        $requestStream.Close()
+
+        Write-Host "  完了: $fileName" -ForegroundColor Green
+        $successCount++
+    }
+    catch {
+        Write-Host "  エラー: $fileName のアップロードに失敗しました: $_" -ForegroundColor Red
+        $failCount++
+    }
+}
+
+Write-Host ""
+Write-Host "アップロード結果: 成功 $successCount 件 / 失敗 $failCount 件" -ForegroundColor Cyan

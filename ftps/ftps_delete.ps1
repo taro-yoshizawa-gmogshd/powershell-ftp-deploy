@@ -4,7 +4,8 @@
 param (
     [string]$FtpServer,      # 例: ftp.example.com
 
-    [string]$RemoteDir = "/" # 例: /target_directory/
+    [Parameter(Mandatory=$true, HelpMessage="削除するリモートファイルのパスを指定してください")]
+    [string]$RemoteFile      # 例: /target_directory/your_file.txt
 )
 
 # ==========================================
@@ -25,21 +26,16 @@ if (Test-Path $configPath) {
 }
 
 # パラメータチェック
-if ([string]::IsNullOrWhiteSpace($FtpServer)) {
-    Write-Host "エラー: ホスト名が指定されていません。" -ForegroundColor Red
+if ([string]::IsNullOrWhiteSpace($FtpServer) -or [string]::IsNullOrWhiteSpace($RemoteFile)) {
+    Write-Host "エラー: ホスト名またはリモートファイルパスが指定されていません。" -ForegroundColor Red
     exit
 }
 
 # ==========================================
 # URLの組み立て
 # ==========================================
-# ディレクトリ指定の末尾に「/」がなければ補完する（エラー防止）
-if (-Not $RemoteDir.EndsWith("/")) {
-    $RemoteDir += "/"
-}
-
-# 一覧取得先の完全なURLを作成 (例: ftp://ftp.example.com/target_directory/)
-$ftpUrl = "ftp://$FtpServer$RemoteDir"
+# 削除対象ファイルの完全なURLを作成 (例: ftp://ftp.example.com/target_directory/your_file.txt)
+$ftpUrl = "ftp://$FtpServer$RemoteFile"
 
 # ==========================================
 # 実行処理 (FTPS対応版)
@@ -48,12 +44,11 @@ $ftpUrl = "ftp://$FtpServer$RemoteDir"
 $credential = Import-Clixml -Path $credPath
 
 try {
-    Write-Host "一覧取得先: $ftpUrl"
-    Write-Host "FTPS (FTP over SSL) での一覧取得を開始します..."
-    Write-Host ""
+    Write-Host "削除対象: $ftpUrl"
+    Write-Host "FTPS (FTP over SSL) での削除を開始します..."
 
     $request = [System.Net.WebRequest]::Create($ftpUrl) -as [System.Net.FtpWebRequest]
-    $request.Method = [System.Net.WebRequestMethods+Ftp]::ListDirectoryDetails
+    $request.Method = [System.Net.WebRequestMethods+Ftp]::DeleteFile
     $request.Credentials = $credential
 
     # ----------------------------------------------------
@@ -62,14 +57,11 @@ try {
     # ----------------------------------------------------
 
     $response = $request.GetResponse() -as [System.Net.FtpWebResponse]
-    $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
-    $listing = $reader.ReadToEnd()
-    $reader.Close()
+    $statusDescription = $response.StatusDescription
     $response.Close()
 
-    Write-Host $listing
+    Write-Host "削除が完了しました！ ($statusDescription)" -ForegroundColor Green
 }
 catch {
     Write-Host "エラーが発生しました: $_" -ForegroundColor Red
-    exit 1
 }
