@@ -71,4 +71,5 @@ try {
 }
 catch {
     Write-Host "エラーが発生しました: $_" -ForegroundColor Red
+    exit 1
 }

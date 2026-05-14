@@ -127,3 +127,40 @@ if ($protocolChoice -in @("2", "3")) {
     Write-Host '  powershell -ExecutionPolicy Bypass -File ".\ftps\ftps_upload.ps1" -RemoteDir "/target/" -LocalFile ".\sample.txt"'
     Write-Host ""
 }
+
+# ==========================================
+# 疎通確認
+# ==========================================
+Write-Host ""
+Write-Host "====================================" -ForegroundColor Cyan
+Write-Host "  疎通確認" -ForegroundColor Cyan
+Write-Host "====================================" -ForegroundColor Cyan
+Write-Host ""
+
+$doCheck = Read-Host "FTPサーバーへの接続確認を実行しますか？ (y/n)"
+if ($doCheck -eq "y") {
+    $checkFailed = $false
+
+    if ($protocolChoice -in @("1", "3")) {
+        Write-Host ""
+        Write-Host "[FTP] ルートディレクトリの一覧を取得します..." -ForegroundColor Yellow
+        & (Join-Path $ftpDir "ftp_ls.ps1")
+        if (-not $?) { $checkFailed = $true }
+    }
+    if ($protocolChoice -in @("2", "3")) {
+        Write-Host ""
+        Write-Host "[FTPS] ルートディレクトリの一覧を取得します..." -ForegroundColor Yellow
+        & (Join-Path $ftpsDir "ftps_ls.ps1")
+        if (-not $?) { $checkFailed = $true }
+    }
+
+    Write-Host ""
+    if ($checkFailed) {
+        Write-Host "疎通確認に失敗しました。" -ForegroundColor Red
+        Write-Host "FTPサーバーのホスト名・ユーザー名・パスワードを確認のうえ、setup.bat を再実行してください。" -ForegroundColor Yellow
+    } else {
+        Write-Host "疎通確認が完了しました。" -ForegroundColor Cyan
+    }
+} else {
+    Write-Host "→ 疎通確認をスキップしました。" -ForegroundColor DarkYellow
+}
